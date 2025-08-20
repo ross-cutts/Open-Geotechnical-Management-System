@@ -1,0 +1,102 @@
+version: '3.8'
+
+services:
+  # PostgreSQL with PostGIS
+  postgres:
+    image: postgis/postgis:15-3.3
+    container_name: gms_postgres
+    environment:
+      POSTGRES_DB: gms_foundation
+      POSTGRES_USER: gms_user
+      POSTGRES_PASSWORD: gms_password
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-scripts:/docker-entrypoint-initdb.d
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gms_user -d gms_foundation"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # PgAdmin for database management
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: gms_pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@gms.local
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+
+  # API Service
+  api:
+    build:
+      context: ../
+      dockerfile: docker/Dockerfile.api
+    container_name: gms_api
+    environment:
+      DATABASE_URL: postgresql://gms_user:gms_password@postgres:5432/gms_foundation
+      PYTHONUNBUFFERED: 1
+    ports:
+      - "8000:8000"
+    volumes:
+      - ../api:/app
+      - ../etl:/etl
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+
+  # Web visualization service
+  web:
+    image: nginx:alpine
+    container_name: gms_web
+    ports:
+      - "8080:80"
+    volumes:
+      - ../visualization:/usr/share/nginx/html
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - api
+
+  # Jupyter notebook for analysis
+  jupyter:
+    image: jupyter/scipy-notebook:latest
+    container_name: gms_jupyter
+    environment:
+      JUPYTER_ENABLE_LAB: "yes"
+      GRANT_SUDO: "yes"
+    ports:
+      - "8888:8888"
+    volumes:
+      - ../analysis:/home/jovyan/work
+      - ../database:/home/jovyan/database
+      - ../etl:/home/jovyan/etl
+    depends_on:
+      - postgres
+    command: start-notebook.sh --NotebookApp.token='' --NotebookApp.password=''
+
+  # GDAL utilities container
+  gdal:
+    image: osgeo/gdal:alpine-normal-latest
+    container_name: gms_gdal
+    volumes:
+      - ../data:/data
+      - ../etl:/scripts
+    command: /bin/sh -c "echo 'GDAL utilities ready. Use docker exec to run commands.'"
+
+volumes:
+  postgres_data:
+  pgadmin_data:
+
+networks:
+  default:
+    name: gms_network

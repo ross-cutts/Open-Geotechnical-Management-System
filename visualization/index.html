@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GMS Foundation - Map Interface</title>
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <!-- Custom CSS -->
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+        
+        #map {
+            height: 100vh;
+            width: 100%;
+        }
+        
+        .info-panel {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: white;
+            padding: 15px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            z-index: 1000;
+            max-width: 300px;
+        }
+        
+        .controls {
+            position: absolute;
+            top: 10px;
+            left: 60px;
+            background: white;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            z-index: 1000;
+        }
+        
+        .controls button {
+            display: block;
+            width: 100%;
+            margin-bottom: 5px;
+            padding: 8px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        
+        .controls button:hover {
+            background: #45a049;
+        }
+        
+        .legend {
+            position: absolute;
+            bottom: 30px;
+            right: 10px;
+            background: white;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            z-index: 1000;
+        }
+        
+        .legend h4 {
+            margin: 0 0 10px 0;
+        }
+        
+        .legend-item {
+            margin-bottom: 5px;
+        }
+        
+        .legend-color {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            margin-right: 5px;
+            vertical-align: middle;
+            border: 1px solid #ccc;
+        }
+        
+        .popup-content h3 {
+            margin: 5px 0;
+        }
+        
+        .popup-content p {
+            margin: 3px 0;
+        }
+        
+        .loading {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            z-index: 2000;
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    
+    <div class="info-panel">
+        <h3>GMS Foundation Map</h3>
+        <p>Click on markers to view details</p>
+        <div id="stats">
+            <p>Borings loaded: <span id="boring-count">0</span></p>
+            <p>Surface observations: <span id="surface-count">0</span></p>
+            <p>Maintenance records: <span id="maintenance-count">0</span></p>
+        </div>
+    </div>
+    
+    <div class="controls">
+        <button onclick="loadBorings()">Load Borings</button>
+        <button onclick="loadSurfaceObservations()">Load Surface Data</button>
+        <button onclick="loadMaintenanceRecords()">Load Maintenance</button>
+        <button onclick="clearLayers()">Clear All</button>
+        <button onclick="searchRadius()">Search Radius</button>
+    </div>
+    
+    <div class="legend">
+        <h4>Legend</h4>
+        <div class="legend-item">
+            <span class="legend-color" style="background-color: #4169E1;"></span>
+            Boring Location
+        </div>
+        <div class="legend-item">
+            <span class="legend-color" style="background-color: #FF6347;"></span>
+            Surface Distress
+        </div>
+        <div class="legend-item">
+            <span class="legend-color" style="background-color: #FFD700;"></span>
+            Maintenance Activity
+        </div>
+    </div>
+    
+    <div class="loading" id="loading">
+        <p>Loading data...</p>
+    </div>
+    
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <!-- Application JS -->
+    <script>
+        // Initialize map
+        const map = L.map('map').setView([40.0, -75.0], 10);
+        
+        // Add base layers
+        const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        });
+        
+        const satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            attribution: '© Esri'
+        });
+        
+        osm.addTo(map);
+        
+        // Layer groups
+        const boringLayer = L.layerGroup();
+        const surfaceLayer = L.layerGroup();
+        const maintenanceLayer = L.layerGroup();
+        
+        // Add layer control
+        const baseLayers = {
+            "OpenStreetMap": osm,
+            "Satellite": satellite
+        };
+        
+        const overlays = {
+            "Borings": boringLayer,
+            "Surface Observations": surfaceLayer,
+            "Maintenance Records": maintenanceLayer
+        };
+        
+        L.control.layers(baseLayers, overlays).addTo(map);
+        
+        // API base URL
+        const API_URL = 'http://localhost:8000/api';
+        
+        // Load borings
+        async function loadBorings() {
+            showLoading(true);
+            try {
+                const bounds = map.getBounds();
+                const bbox = `${bounds.getWest()},${bounds.getSouth()},${bounds.getEast()},${bounds.getNorth()}`;
+                
+                const response = await fetch(`${API_URL}/borings?bbox=${bbox}&limit=500`);
+                const data = await response.json();
+                
+                boringLayer.clearLayers();
+                
+                data.forEach(boring => {
+                    const marker = L.circleMarker([boring.latitude, boring.longitude], {
+                        radius: 6,
+                        fillColor: '#4169E1',
+                        color: '#000',
+                        weight: 1,
+                        opacity: 1,
+                        fillOpacity: 0.8
+                    });
+                    
+                    marker.bindPopup(`
+                        <div class="popup-content">
+                            <h3>Boring: ${boring.point_id}</h3>
+                            <p><strong>Project:</strong> ${boring.project_number || 'N/A'}</p>
+                            <p><strong>Depth:</strong> ${boring.total_depth_m || 'N/A'} m</p>
+                            <p><strong>Elevation:</strong> ${boring.elevation_m || 'N/A'} m</p>
+                            <p><strong>Date:</strong> ${boring.investigation_date || 'N/A'}</p>
+                            <p><a href="#" onclick="viewBoringDetails('${boring.id}')">View Details</a></p>
+                        </div>
+                    `);
+                    
+                    marker.addTo(boringLayer);
+                });
+                
+                boringLayer.addTo(map);
+                document.getElementById('boring-count').textContent = data.length;
+                
+            } catch (error) {
+                console.error('Error loading borings:', error);
+                alert('Failed to load boring data');
+            } finally {
+                showLoading(false);
+            }
+        }
+        
+        // Load surface observations
+        async function loadSurfaceObservations() {
+            showLoading(true);
+            try {
+                // This would connect to the actual API endpoint
+                // For demo purposes, showing the structure
+                const mockData = [
+                    {
+                        id: '1',
+                        distress_type: 'Cracking',
+                        severity: 'high',
+                        coordinates: [[40.1, -75.1], [40.11, -75.09]]
+                    }
+                ];
+                
+                surfaceLayer.clearLayers();
+                
+                mockData.forEach(obs => {
+                    const polyline = L.polyline(obs.coordinates, {
+                        color: '#FF6347',
+                        weight: 4,
+                        opacity: 0.7
+                    });
+                    
+                    polyline.bindPopup(`
+                        <div class="popup-content">
+                            <h3>Surface Distress</h3>
+                            <p><strong>Type:</strong> ${obs.distress_type}</p>
+                            <p><strong>Severity:</strong> ${obs.severity}</p>
+                        </div>
+                    `);
+                    
+                    polyline.addTo(surfaceLayer);
+                });
+                
+                surfaceLayer.addTo(map);
+                document.getElementById('surface-count').textContent = mockData.length;
+                
+            } catch (error) {
+                console.error('Error loading surface observations:', error);
+            } finally {
+                showLoading(false);
+            }
+        }
+        
+        // Search radius function
+        let searchCircle = null;
+        function searchRadius() {
+            map.once('click', async function(e) {
+                if (searchCircle) {
+                    map.removeLayer(searchCircle);
+                }
+                
+                const radius = prompt('Enter search radius in meters:', '100');
+                if (!radius) return;
+                
+                searchCircle = L.circle(e.latlng, {
+                    radius: parseFloat(radius),
+                    fillColor: '#4169E1',
+                    fillOpacity: 0.2,
+                    color: '#4169E1',
+                    weight: 2
+                }).addTo(map);
+                
+                showLoading(true);
+                try {
+                    const response = await fetch(`${API_URL}/spatial/search`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            center: {
+                                latitude: e.latlng.lat,
+                                longitude: e.latlng.lng
+                            },
+                            radius_m: parseFloat(radius),
+                            data_types: ['borings', 'surface_observations', 'maintenance']
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    console.log('Search results:', data);
+                    
+                    // Process and display results
+                    alert(`Found ${data.borings?.length || 0} borings within ${radius}m`);
+                    
+                } catch (error) {
+                    console.error('Error searching:', error);
+                } finally {
+                    showLoading(false);
+                }
+            });
+            
+            alert('Click on the map to search');
+        }
+        
+        // Clear all layers
+        function clearLayers() {
+            boringLayer.clearLayers();
+            surfaceLayer.clearLayers();
+            maintenanceLayer.clearLayers();
+            if (searchCircle) {
+                map.removeLayer(searchCircle);
+                searchCircle = null;
+            }
+            document.getElementById('boring-count').textContent = '0';
+            document.getElementById('surface-count').textContent = '0';
+            document.getElementById('maintenance-count').textContent = '0';
+        }
+        
+        // View boring details
+        async function viewBoringDetails(boringId) {
+            showLoading(true);
+            try {
+                const response = await fetch(`${API_URL}/borings/${boringId}`);
+                const data = await response.json();
+                console.log('Boring details:', data);
+                
+                // In a real application, this would open a detailed view
+                alert('Boring details loaded - check console');
+                
+            } catch (error) {
+                console.error('Error loading boring details:', error);
+            } finally {
+                showLoading(false);
+            }
+        }
+        
+        // Show/hide loading indicator
+        function showLoading(show) {
+            document.getElementById('loading').style.display = show ? 'block' : 'none';
+        }
+        
+        // Load maintenance records (stub)
+        function loadMaintenanceRecords() {
+            alert('Maintenance records loading not implemented in demo');
+        }
+        
+        // Load initial data when map moves
+        map.on('moveend', function() {
+            // Auto-load data when map is moved
+            // Commented out for demo to avoid excessive API calls
+            // loadBorings();
+        });
+        
+        // Initial load
+        loadBorings();
+    </script>
+</body>
+</html>
