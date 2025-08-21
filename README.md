@@ -273,7 +273,7 @@ docker-compose exec postgres psql -U gms_user -d gms_foundation -f tests/spatial
 
 ## 📚 Documentation
 
-- [Database Schema Details](docs/database_schema.md)
+- [Database Schema Details](docs/database_diagram.md)
 - [API Documentation](http://localhost:8000/docs) (when running)
 - [ETL Pipeline Guide](docs/etl_guide.md)
 - [Spatial Analysis Functions](docs/spatial_functions.md)
