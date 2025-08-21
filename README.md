@@ -149,8 +149,6 @@ gms-foundation/
 ├── etl/
 │   ├── borings/         # DIGGS-compliant boring data imports
 │   ├── elevation/       # DEM and LiDAR processing  
-│   ├── maintenance/     # Maintenance record imports
-│   └── integration/     # Data fusion and correlation
 ├── api/                 # FastAPI REST API
 ├── visualization/       # Web interface (Leaflet.js)
 ├── docker/             # Docker configuration
