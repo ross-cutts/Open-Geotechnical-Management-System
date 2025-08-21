@@ -302,9 +302,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🆘 Support
 
-- GitHub Issues: [Report bugs or request features](https://github.com/[your-org]/gms-foundation/issues)
-- Documentation: [Full documentation](https://github.com/[your-org]/gms-foundation/wiki)
-- Community: Join our discussion forum
+- GitHub Issues: [Report bugs or request features](https://github.com/ross-cutts/gms-foundation/issues)
+
 
 ## 🚦 Roadmap
 
