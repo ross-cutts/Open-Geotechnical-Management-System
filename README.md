@@ -302,7 +302,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🆘 Support
 
-- GitHub Issues: [Report bugs or request features]([https://github.com/ross-cutts/gms-foundation/issues](https://github.com/ross-cutts/Open-Geotechnical-Management-System/issues))
+- GitHub Issues: [Report bugs or request features](https://github.com/ross-cutts/gms-foundation/issues](https://github.com/ross-cutts/Open-Geotechnical-Management-System/issues)
 
 
 ## 🚦 Roadmap
