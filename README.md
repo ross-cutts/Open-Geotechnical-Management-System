@@ -164,28 +164,17 @@ gms-foundation/
 └── docs/               # Additional documentation
 ```
 
-## 🗄️ Database Schema
+## 📂 Database Implementation
 
-The database uses PostgreSQL with PostGIS extension for spatial capabilities. Key tables include:
+The complete database schema is implemented in `/database/schema/` with the following SQL files:
 
-### Core Tables
-- `geotechnical_points` - Boring locations with metadata
-- `subsurface_layers` - Stratigraphy information
-- `spt_results` - Standard Penetration Test data
-- `laboratory_tests` - Various lab test results (flexible JSONB)
+1. **01_create_database.sql** - Database initialization and PostGIS setup
+2. **02_core_tables.sql** - Core geotechnical data tables
+3. **03_integration_tables.sql** - External data source integration
+4. **04_views_functions.sql** - Spatial analysis functions and views
+5. **05_asset_inventory.sql** - Geotechnical asset and risk management
 
-### Integration Tables
-- `surface_observations` - ARAN/imagery data
-- `maintenance_records` - Historical repairs
-- `elevation_points` - DEM data
-- `slope_analysis` - Calculated slope risks
-- `data_correlations` - Links between data sources
-
-### Views and Functions
-- Spatial search functions
-- Correlation analysis
-- Subsurface profile generation
-- Grid-based statistics
+See the [detailed schema documentation](docs/database_diagram.md) for complete table definitions and relationships.
 
 ## 🔌 API Endpoints
 
