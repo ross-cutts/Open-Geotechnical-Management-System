@@ -72,7 +72,6 @@ gms-foundation/
 │   └── integration/     # Data fusion and correlation
 ├── api/                 # FastAPI REST API
 ├── visualization/       # Web interface (Leaflet.js)
-├── analysis/           # Jupyter notebooks
 ├── docker/             # Docker configuration
 ├── scripts/            # Utility scripts
 └── docs/               # Additional documentation
@@ -204,13 +203,6 @@ docker-compose exec api pytest
 docker-compose exec postgres psql -U gms_user -d gms_foundation -f tests/spatial_tests.sql
 ```
 
-## 📚 Documentation
-
-- [Database Schema Details](docs/database_schema.md)
-- [API Documentation](http://localhost:8000/docs) (when running)
-- [ETL Pipeline Guide](docs/etl_guide.md)
-- [Spatial Analysis Functions](docs/spatial_functions.md)
-
 ## 🤝 Contributing
 
 1. Fork the repository
@@ -233,7 +225,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - GitHub Issues: [Report bugs or request features](https://github.com/[your-org]/gms-foundation/issues)
 - Documentation: [Full documentation](https://github.com/[your-org]/gms-foundation/wiki)
-- Community: Join our discussion forum
+
 
 ## 🚦 Roadmap
 
