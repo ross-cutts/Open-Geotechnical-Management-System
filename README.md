@@ -6,6 +6,92 @@ A modern, GIS-centric foundation for building Geotechnical Management Systems th
 
 Transform traditional boring log databases into integrated spatial intelligence platforms that leverage ALL available data sources - from surface distress patterns to elevation changes - for better infrastructure decisions.
 
+## 🗄️ Database Schema - Foundation for Your GMS
+
+The core value of this repository is a **comprehensive database schema** designed specifically for geotechnical asset management. This schema can serve as the foundation for any agency looking to build a modern GMS.
+
+### Entity Relationship Diagram
+
+```mermaid
+erDiagram
+    %% Core Geotechnical Tables
+    PROJECTS ||--o{ GEOTECHNICAL_POINTS : contains
+    GEOTECHNICAL_POINTS ||--o{ SUBSURFACE_LAYERS : has
+    GEOTECHNICAL_POINTS ||--o{ SPT_RESULTS : has
+    GEOTECHNICAL_POINTS ||--o{ LABORATORY_TESTS : has
+    SUBSURFACE_LAYERS ||--o{ LABORATORY_TESTS : tested_in
+    
+    %% Asset Management
+    GEOTECHNICAL_ASSETS ||--o{ SLOPE_INVENTORY : details
+    GEOTECHNICAL_ASSETS ||--o{ RETAINING_WALLS : details
+    GEOTECHNICAL_ASSETS ||--o{ FOUNDATION_INVENTORY : details
+    GEOTECHNICAL_ASSETS ||--o{ ASSET_INSPECTIONS : tracked_by
+    
+    %% Risk Management
+    RISK_FEATURES ||--o{ SINKHOLE_DETAILS : classified_as
+    RISK_FEATURES }o--o{ STABILIZATION_MEASURES : mitigated_by
+    
+    %% Data Integration
+    GEOTECHNICAL_POINTS }o..o{ SURFACE_OBSERVATIONS : "correlated via proximity"
+    GEOTECHNICAL_POINTS }o..o{ MAINTENANCE_RECORDS : "correlated via proximity"
+    SURFACE_OBSERVATIONS }o..o{ MAINTENANCE_RECORDS : "correlated via proximity"
+    
+    %% Correlation System
+    DATA_CORRELATIONS }o--|| GEOTECHNICAL_POINTS : references
+    DATA_CORRELATIONS }o--|| SURFACE_OBSERVATIONS : references
+    DATA_CORRELATIONS }o--|| MAINTENANCE_RECORDS : references
+```
+
+### Key Schema Features
+
+#### 📍 **Core Geotechnical Data**
+- Boring locations with full metadata
+- Subsurface stratigraphy layers
+- SPT blow counts and refusal data
+- Flexible laboratory test storage (JSONB)
+- Project-based organization
+
+#### 🏗️ **Asset Inventory**
+- **Earth Structures**: Slopes, embankments, levees
+- **Retaining Systems**: MSE walls, soil nail walls, sheet piles
+- **Foundations**: Bridge piles, spread footings, drilled shafts
+- **Stabilization**: Rock bolts, anchors, drainage systems
+- Complete inspection and monitoring history
+
+#### ⚠️ **Risk Features**
+- **Sinkholes**: Active, historical, and repaired
+- **Karst Zones**: Risk areas and buffers
+- **Landslides**: Historical and potential
+- **Settlement Zones**: Monitoring and mitigation
+- Risk levels and mitigation tracking
+
+#### 🔄 **Data Integration**
+- Surface distress observations (ARAN data)
+- Maintenance and repair history
+- Digital elevation models and slope analysis
+- Weather and environmental data
+- Traffic loading information
+- Automatic correlation discovery
+
+#### 📊 **Advanced Features**
+- Spatial indexing for all geographic data
+- Temporal tracking (valid_from, valid_to)
+- Data quality and confidence scoring
+- JSONB flexibility for evolving requirements
+- Materialized views for performance
+- Built-in spatial analysis functions
+
+### Database Design Principles
+
+1. **Spatial-First**: Every location uses PostGIS geometry types
+2. **Flexible Storage**: JSONB for varying test types and metadata
+3. **Quality Tracking**: Confidence levels and data source tracking
+4. **Integration Ready**: Correlation system links any data types
+5. **Performance Optimized**: Proper indexes and materialized views
+6. **Standards Compliant**: Follows DIGGS and OGC specifications
+
+> **For Agencies**: This schema provides a production-ready foundation that can be implemented as-is or customized for specific needs. It represents industry best practices and lessons learned from multiple DOT implementations.
+
 ## 🚀 Quick Start
 
 ```bash
@@ -72,6 +158,7 @@ gms-foundation/
 │   └── integration/     # Data fusion and correlation
 ├── api/                 # FastAPI REST API
 ├── visualization/       # Web interface (Leaflet.js)
+├── analysis/           # Jupyter notebooks
 ├── docker/             # Docker configuration
 ├── scripts/            # Utility scripts
 └── docs/               # Additional documentation
@@ -203,6 +290,13 @@ docker-compose exec api pytest
 docker-compose exec postgres psql -U gms_user -d gms_foundation -f tests/spatial_tests.sql
 ```
 
+## 📚 Documentation
+
+- [Database Schema Details](docs/database_schema.md)
+- [API Documentation](http://localhost:8000/docs) (when running)
+- [ETL Pipeline Guide](docs/etl_guide.md)
+- [Spatial Analysis Functions](docs/spatial_functions.md)
+
 ## 🤝 Contributing
 
 1. Fork the repository
@@ -225,7 +319,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - GitHub Issues: [Report bugs or request features](https://github.com/[your-org]/gms-foundation/issues)
 - Documentation: [Full documentation](https://github.com/[your-org]/gms-foundation/wiki)
-
+- Community: Join our discussion forum
 
 ## 🚦 Roadmap
 
