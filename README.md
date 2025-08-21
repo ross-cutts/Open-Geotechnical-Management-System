@@ -289,15 +289,14 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🙏 Acknowledgments
 
+- Based on work from PennDOT, Md DOT.
 - Built on open standards including DIGGS and OGC specifications
 - Leverages PostGIS for spatial capabilities
 - Inspired by modern GIS-centric infrastructure management approaches
 
 ## 🆘 Support
 
-- GitHub Issues: [Report bugs or request features](https://github.com/[your-org]/gms-foundation/issues)
-- Documentation: [Full documentation](https://github.com/[your-org]/gms-foundation/wiki)
-- Community: Join our discussion forum
+- GitHub Issues: [Report bugs or request features]([https://github.com/[your-org]/gms-foundation/issues](https://github.com/ross-cutts/Open-Geotechnical-Management-System/issues))
 
 ## 🚦 Roadmap
 
