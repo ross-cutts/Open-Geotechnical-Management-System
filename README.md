@@ -99,7 +99,7 @@ erDiagram
 git clone https://github.com/[your-org]/gms-foundation
 cd gms-foundation
 
-# Start the entire stack
+# Start the entire stack (includes full database schema setup)
 docker-compose up -d
 
 # Check that services are running
@@ -108,7 +108,11 @@ docker-compose ps
 # Access the services
 # Web Interface: http://localhost:8080
 # API: http://localhost:8000
-# PgAdmin: http://localhost:5050
+# PgAdmin: http://localhost:5050 (admin@gms.local / admin)
+
+# Database Connection
+# Host: localhost, Port: 5432
+# Database: gms_foundation, User: gms_user, Password: gms_password
 ```
 
 ## 📋 Prerequisites
@@ -148,7 +152,7 @@ gms-foundation/
 │   └── sample_data/      # Example datasets
 ├── etl/
 │   ├── borings/         # DIGGS-compliant boring data imports
-│   ├── elevation/       # DEM and LiDAR processing  
+│   └── elevation/       # DEM and LiDAR processing
 ├── api/                 # FastAPI REST API
 ├── visualization/       # Web interface (Leaflet.js)
 ├── docker/             # Docker configuration
@@ -273,7 +277,10 @@ docker-compose exec postgres psql -U gms_user -d gms_foundation -f tests/spatial
 
 ## 📚 Documentation
 
-- [Database Schema Details](docs/database_diagram.md)
+- [Database Schema Details](docs/database_schema.md)
+- [API Documentation](http://localhost:8000/docs) (when running)
+- [ETL Pipeline Guide](docs/etl_guide.md)
+- [Spatial Analysis Functions](docs/spatial_functions.md)
 
 ## 🤝 Contributing
 
@@ -289,14 +296,15 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🙏 Acknowledgments
 
-- Based on work from PennDOT, Md DOT.
 - Built on open standards including DIGGS and OGC specifications
 - Leverages PostGIS for spatial capabilities
 - Inspired by modern GIS-centric infrastructure management approaches
 
 ## 🆘 Support
 
-- GitHub Issues: [Report bugs or request features]([https://github.com/[your-org]/gms-foundation/issues](https://github.com/ross-cutts/Open-Geotechnical-Management-System/issues))
+- GitHub Issues: [Report bugs or request features](https://github.com/[your-org]/gms-foundation/issues)
+- Documentation: [Full documentation](https://github.com/[your-org]/gms-foundation/wiki)
+- Community: Join our discussion forum
 
 ## 🚦 Roadmap
 
