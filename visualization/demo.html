@@ -6,10 +6,9 @@
     <title>GMS Foundation - Pennsylvania Demo</title>
     
     <!-- Leaflet CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    
-    <!-- Leaflet Heatmap Plugin -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" 
+          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" 
+          crossorigin="anonymous" />
     
     <!-- Custom CSS -->
     <style>
@@ -322,7 +321,20 @@
         </div>
     </div>
     
+    <!-- Leaflet JS - Load before our script -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" 
+            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" 
+            crossorigin="anonymous"></script>
+    
     <script>
+        // Initialize variables first to avoid reference errors
+        let boringsVisible = false;
+        let surfaceVisible = false;
+        let maintenanceVisible = false;
+        let risksVisible = false;
+        let assetsVisible = false;
+        let storyStep = 0;
+        
         // Initialize map centered on Pennsylvania
         const map = L.map('map').setView([40.8, -77.8], 8);
         
@@ -736,12 +748,6 @@
         }
         
         // Toggle functions
-        let boringsVisible = false;
-        let surfaceVisible = false;
-        let maintenanceVisible = false;
-        let risksVisible = false;
-        let assetsVisible = false;
-        
         function toggleBorings() {
             if (!boringsVisible) {
                 addBorings();
@@ -861,7 +867,6 @@
         }
         
         // Story mode
-        let storyStep = 0;
         const storySteps = [
             {
                 title: 'Welcome to GMS',
