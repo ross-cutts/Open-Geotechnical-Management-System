@@ -105,14 +105,10 @@ docker-compose up -d
 # Check that services are running
 docker-compose ps
 
-# Load sample data (optional)
-./scripts/load_sample_data.sh
-
 # Access the services
 # Web Interface: http://localhost:8080
 # API: http://localhost:8000
 # PgAdmin: http://localhost:5050
-# Jupyter: http://localhost:8888
 ```
 
 ## 📋 Prerequisites
@@ -130,7 +126,6 @@ docker-compose ps
 2. **FastAPI** - RESTful API with spatial query capabilities  
 3. **Leaflet.js** - Web-based visualization
 4. **ETL Scripts** - Data integration pipelines
-5. **Jupyter** - Analysis and exploration environment
 
 ### Data Sources Integration
 
@@ -152,13 +147,12 @@ gms-foundation/
 │   ├── migrations/       # Database migration scripts
 │   └── sample_data/      # Example datasets
 ├── etl/
-│   ├── imagery/         # ARAN/surface imagery processing
-│   ├── elevation/       # DEM and LiDAR processing
+│   ├── borings/         # DIGGS-compliant boring data imports
+│   ├── elevation/       # DEM and LiDAR processing  
 │   ├── maintenance/     # Maintenance record imports
 │   └── integration/     # Data fusion and correlation
 ├── api/                 # FastAPI REST API
 ├── visualization/       # Web interface (Leaflet.js)
-├── analysis/           # Jupyter notebooks
 ├── docker/             # Docker configuration
 ├── scripts/            # Utility scripts
 └── docs/               # Additional documentation
@@ -228,14 +222,14 @@ The web interface provides:
 - Heat maps for various metrics
 - Time-series analysis for temporal data
 
-## 📈 Analysis Examples
+## 📈 Analysis Capabilities
 
-Jupyter notebooks demonstrate:
+The system supports various analytical functions:
 
-1. **Correlation Analysis** - How surface distress relates to subsurface
-2. **Predictive Maintenance** - Using patterns to predict failures
-3. **Risk Assessment** - Combining multiple factors for risk zones
-4. **Cost Optimization** - Prioritizing maintenance investments
+1. **Correlation Analysis** - Discover relationships between surface distress and subsurface conditions
+2. **Predictive Maintenance** - Use historical patterns to predict future failures
+3. **Risk Assessment** - Combine multiple factors to identify risk zones
+4. **Cost Optimization** - Prioritize maintenance investments based on risk and condition
 
 ## 🔧 Configuration
 
