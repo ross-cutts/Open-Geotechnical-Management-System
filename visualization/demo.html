@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GMS Foundation - Pennsylvania Demo</title>
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <!-- Leaflet Heatmap Plugin -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <!-- Custom CSS -->
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        #map {
+            height: 100vh;
+            width: 100%;
+        }
+        
+        .info-panel {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            z-index: 1000;
+            max-width: 320px;
+        }
+        
+        .info-panel h3 {
+            margin: 0 0 15px 0;
+            color: #333;
+            border-bottom: 2px solid #4CAF50;
+            padding-bottom: 5px;
+        }
+        
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 8px 0;
+            padding: 5px;
+            background: #f5f5f5;
+            border-radius: 4px;
+        }
+        
+        .stat-value {
+            font-weight: bold;
+            color: #4CAF50;
+        }
+        
+        .controls {
+            position: absolute;
+            top: 10px;
+            left: 60px;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            z-index: 1000;
+            width: 200px;
+        }
+        
+        .controls h4 {
+            margin: 0 0 10px 0;
+            color: #333;
+        }
+        
+        .controls button {
+            display: block;
+            width: 100%;
+            margin-bottom: 8px;
+            padding: 10px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+        
+        .controls button:hover {
+            background: #45a049;
+        }
+        
+        .controls button.active {
+            background: #2196F3;
+        }
+        
+        .controls button.danger {
+            background: #f44336;
+        }
+        
+        .controls button.danger:hover {
+            background: #da190b;
+        }
+        
+        .legend {
+            position: absolute;
+            bottom: 30px;
+            right: 10px;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            z-index: 1000;
+            max-width: 250px;
+        }
+        
+        .legend h4 {
+            margin: 0 0 10px 0;
+            color: #333;
+        }
+        
+        .legend-item {
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .legend-color {
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            margin-right: 10px;
+            border: 1px solid #ccc;
+            border-radius: 50%;
+        }
+        
+        .legend-line {
+            display: inline-block;
+            width: 24px;
+            height: 4px;
+            margin-right: 10px;
+            border: 1px solid #ccc;
+        }
+        
+        .popup-content h3 {
+            margin: 0 0 10px 0;
+            color: #4CAF50;
+            font-size: 16px;
+        }
+        
+        .popup-content p {
+            margin: 5px 0;
+            font-size: 14px;
+        }
+        
+        .popup-content .label {
+            font-weight: bold;
+            color: #666;
+        }
+        
+        .story-panel {
+            position: absolute;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            padding: 20px 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.3);
+            z-index: 1001;
+            display: none;
+            max-width: 600px;
+            text-align: center;
+        }
+        
+        .story-panel h2 {
+            color: #4CAF50;
+            margin-bottom: 10px;
+        }
+        
+        .story-panel p {
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+        
+        .story-controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .story-controls button {
+            padding: 10px 20px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .correlation-line {
+            stroke: #ff6b6b;
+            stroke-width: 2;
+            stroke-dasharray: 5, 5;
+            fill: none;
+            opacity: 0.6;
+        }
+        
+        .risk-overlay {
+            fill: #ff0000;
+            fill-opacity: 0.2;
+            stroke: #ff0000;
+            stroke-width: 2;
+        }
+        
+        /* Custom marker styles */
+        .boring-marker {
+            background: #4169E1;
+            border: 2px solid white;
+            border-radius: 50%;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        }
+        
+        .sinkhole-marker {
+            background: #ff0000;
+            border: 3px solid #ffff00;
+            border-radius: 50%;
+            box-shadow: 0 2px 8px rgba(255,0,0,0.5);
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        
+        .asset-marker {
+            background: #9C27B0;
+            border: 2px solid white;
+            border-radius: 4px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    
+    <div class="info-panel">
+        <h3>GMS Pennsylvania Demo</h3>
+        <div class="stat-row">
+            <span>Boring Locations:</span>
+            <span class="stat-value" id="boring-count">0</span>
+        </div>
+        <div class="stat-row">
+            <span>Surface Distress:</span>
+            <span class="stat-value" id="surface-count">0</span>
+        </div>
+        <div class="stat-row">
+            <span>Maintenance Records:</span>
+            <span class="stat-value" id="maintenance-count">0</span>
+        </div>
+        <div class="stat-row">
+            <span>Risk Features:</span>
+            <span class="stat-value" id="risk-count">0</span>
+        </div>
+        <div class="stat-row">
+            <span>Geotech Assets:</span>
+            <span class="stat-value" id="asset-count">0</span>
+        </div>
+    </div>
+    
+    <div class="controls">
+        <h4>Data Layers</h4>
+        <button onclick="toggleBorings()" id="btn-borings">Show Borings</button>
+        <button onclick="toggleSurface()" id="btn-surface">Show Surface Data</button>
+        <button onclick="toggleMaintenance()" id="btn-maintenance">Show Maintenance</button>
+        <button onclick="toggleRisks()" id="btn-risks">Show Risk Features</button>
+        <button onclick="toggleAssets()" id="btn-assets">Show Assets</button>
+        <button onclick="showCorrelations()" id="btn-correlations">Show Correlations</button>
+        <button onclick="startStoryMode()" style="margin-top: 15px; background: #FF9800;">Story Mode</button>
+        <button onclick="clearAll()" class="danger">Clear All</button>
+    </div>
+    
+    <div class="legend">
+        <h4>Legend</h4>
+        <div class="legend-item">
+            <span class="legend-color" style="background-color: #4169E1;"></span>
+            <span>Boring Location</span>
+        </div>
+        <div class="legend-item">
+            <span class="legend-line" style="background-color: #FF6347; height: 4px;"></span>
+            <span>Surface Distress</span>
+        </div>
+        <div class="legend-item">
+            <span class="legend-color" style="background-color: #FFD700;"></span>
+            <span>Maintenance Activity</span>
+        </div>
+        <div class="legend-item">
+            <span class="legend-color" style="background-color: #FF0000;"></span>
+            <span>Sinkhole/Risk</span>
+        </div>
+        <div class="legend-item">
+            <span class="legend-color" style="background-color: #9C27B0;"></span>
+            <span>Geotech Asset</span>
+        </div>
+    </div>
+    
+    <div class="story-panel" id="story-panel">
+        <h2 id="story-title">Welcome to GMS</h2>
+        <p id="story-text">Let's explore how integrating multiple data sources creates subsurface intelligence.</p>
+        <div class="story-controls">
+            <button onclick="previousStory()">Previous</button>
+            <button onclick="nextStory()">Next</button>
+            <button onclick="exitStoryMode()">Exit</button>
+        </div>
+    </div>
+    
+    <script>
+        // Initialize map centered on Pennsylvania
+        const map = L.map('map').setView([40.8, -77.8], 8);
+        
+        // Add base layers
+        const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        });
+        
+        const satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            attribution: '© Esri'
+        });
+        
+        osm.addTo(map);
+        
+        // Layer groups
+        const boringLayer = L.layerGroup();
+        const surfaceLayer = L.layerGroup();
+        const maintenanceLayer = L.layerGroup();
+        const riskLayer = L.layerGroup();
+        const assetLayer = L.layerGroup();
+        const correlationLayer = L.layerGroup();
+        
+        // Sample data for Pennsylvania locations
+        const sampleBorings = [
+            // I-76 Pennsylvania Turnpike corridor
+            {id: 'B001', lat: 40.051, lon: -78.512, project: 'I-76 MP 110', depth: 45, rock_depth: 32, spt_avg: 18, date: '2023-05-15'},
+            {id: 'B002', lat: 40.048, lon: -78.498, project: 'I-76 MP 111', depth: 38, rock_depth: 28, spt_avg: 22, date: '2023-05-16'},
+            {id: 'B003', lat: 40.045, lon: -78.485, project: 'I-76 MP 112', depth: 52, rock_depth: 41, spt_avg: 15, date: '2023-05-17'},
+            {id: 'B004', lat: 40.042, lon: -78.471, project: 'I-76 MP 113', depth: 35, rock_depth: 25, spt_avg: 28, date: '2023-05-18'},
+            {id: 'B005', lat: 40.038, lon: -78.455, project: 'I-76 MP 114', depth: 48, rock_depth: 38, spt_avg: 12, date: '2023-05-19'},
+            
+            // I-81 corridor near Harrisburg
+            {id: 'B006', lat: 40.484, lon: -77.122, project: 'I-81 Bridge', depth: 65, rock_depth: 55, spt_avg: 45, date: '2023-06-01'},
+            {id: 'B007', lat: 40.472, lon: -77.118, project: 'I-81 Bridge', depth: 62, rock_depth: 52, spt_avg: 48, date: '2023-06-02'},
+            {id: 'B008', lat: 40.461, lon: -77.115, project: 'I-81 Ramp', depth: 42, rock_depth: 30, spt_avg: 25, date: '2023-06-03'},
+            
+            // US Route 30 near Lancaster (karst area)
+            {id: 'B009', lat: 40.038, lon: -76.306, project: 'US-30 Karst', depth: 55, rock_depth: 15, spt_avg: 8, date: '2023-07-10'},
+            {id: 'B010', lat: 40.035, lon: -76.295, project: 'US-30 Karst', depth: 58, rock_depth: 18, spt_avg: 6, date: '2023-07-11'},
+            {id: 'B011', lat: 40.032, lon: -76.284, project: 'US-30 Karst', depth: 60, rock_depth: 20, spt_avg: 5, date: '2023-07-12'},
+            
+            // I-79 near Pittsburgh
+            {id: 'B012', lat: 40.508, lon: -80.195, project: 'I-79 Slope', depth: 48, rock_depth: 35, spt_avg: 32, date: '2023-08-05'},
+            {id: 'B013', lat: 40.495, lon: -80.188, project: 'I-79 Slope', depth: 45, rock_depth: 33, spt_avg: 30, date: '2023-08-06'},
+            {id: 'B014', lat: 40.482, lon: -80.181, project: 'I-79 Wall', depth: 50, rock_depth: 40, spt_avg: 38, date: '2023-08-07'},
+            
+            // Route 422 near Reading
+            {id: 'B015', lat: 40.335, lon: -75.927, project: 'SR-422', depth: 40, rock_depth: 28, spt_avg: 20, date: '2023-09-01'},
+            {id: 'B016', lat: 40.332, lon: -75.915, project: 'SR-422', depth: 42, rock_depth: 30, spt_avg: 22, date: '2023-09-02'},
+            
+            // I-95 near Philadelphia
+            {id: 'B017', lat: 39.952, lon: -75.165, project: 'I-95 Urban', depth: 35, rock_depth: 45, spt_avg: 35, date: '2023-09-15'},
+            {id: 'B018', lat: 39.948, lon: -75.158, project: 'I-95 Urban', depth: 38, rock_depth: 48, spt_avg: 40, date: '2023-09-16'},
+            
+            // Additional scattered locations
+            {id: 'B019', lat: 41.242, lon: -77.001, project: 'US-15 North', depth: 44, rock_depth: 34, spt_avg: 26, date: '2023-10-01'},
+            {id: 'B020', lat: 40.615, lon: -79.152, project: 'US-22 East', depth: 46, rock_depth: 36, spt_avg: 24, date: '2023-10-05'}
+        ];
+        
+        const surfaceDistress = [
+            // Correlate with soft soils near karst area
+            {id: 'SD001', type: 'Longitudinal Cracking', severity: 'high', 
+             coords: [[40.039, -76.310], [40.037, -76.302]], rut_depth: 25, iri: 185},
+            {id: 'SD002', type: 'Alligator Cracking', severity: 'severe',
+             coords: [[40.035, -76.298], [40.033, -76.290]], rut_depth: 35, iri: 220},
+            {id: 'SD003', type: 'Depression', severity: 'high',
+             coords: [[40.032, -76.287], [40.031, -76.280]], rut_depth: 40, iri: 240},
+            
+            // I-76 corridor distress
+            {id: 'SD004', type: 'Transverse Cracking', severity: 'medium',
+             coords: [[40.052, -78.515], [40.050, -78.508]], rut_depth: 15, iri: 145},
+            {id: 'SD005', type: 'Rutting', severity: 'medium',
+             coords: [[40.046, -78.488], [40.044, -78.480]], rut_depth: 20, iri: 160},
+            
+            // I-79 slope area
+            {id: 'SD006', type: 'Edge Cracking', severity: 'high',
+             coords: [[40.510, -80.198], [40.506, -80.192]], rut_depth: 18, iri: 170},
+            {id: 'SD007', type: 'Shoulder Drop-off', severity: 'medium',
+             coords: [[40.497, -80.190], [40.493, -80.185]], rut_depth: 22, iri: 155},
+            
+            // Urban I-95
+            {id: 'SD008', type: 'Block Cracking', severity: 'low',
+             coords: [[39.953, -75.168], [39.950, -75.162]], rut_depth: 10, iri: 120},
+            
+            // Additional distress observations
+            {id: 'SD009', type: 'Patching', severity: 'medium',
+             coords: [[40.336, -75.930], [40.334, -75.923]], rut_depth: 12, iri: 135},
+            {id: 'SD010', type: 'Potholes', severity: 'high',
+             coords: [[40.616, -79.155], [40.614, -79.148]], rut_depth: 30, iri: 200}
+        ];
+        
+        const maintenanceRecords = [
+            // Sinkhole repairs in karst area
+            {id: 'M001', type: 'Sinkhole Repair', date: '2023-11-15', cost: 125000, 
+             location: [40.036, -76.300], emergency: true, description: 'Emergency sinkhole filling'},
+            {id: 'M002', type: 'Sinkhole Repair', date: '2023-10-22', cost: 85000,
+             location: [40.034, -76.292], emergency: true, description: 'Subsidence repair'},
+            {id: 'M003', type: 'Drainage Improvement', date: '2023-09-10', cost: 45000,
+             location: [40.031, -76.283], emergency: false, description: 'Install french drains'},
+            
+            // Regular maintenance
+            {id: 'M004', type: 'Patching', date: '2023-08-15', cost: 15000,
+             location: [40.049, -78.505], emergency: false, description: 'Routine patching'},
+            {id: 'M005', type: 'Crack Sealing', date: '2023-07-20', cost: 8000,
+             location: [40.044, -78.482], emergency: false, description: 'Preventive crack sealing'},
+            {id: 'M006', type: 'Resurfacing', date: '2023-06-01', cost: 250000,
+             location: [40.507, -80.194], emergency: false, description: 'Section resurfacing'},
+            {id: 'M007', type: 'Emergency Repair', date: '2023-11-28', cost: 65000,
+             location: [40.496, -80.187], emergency: true, description: 'Slope failure repair'},
+            
+            // Bridge deck repairs
+            {id: 'M008', type: 'Bridge Deck Repair', date: '2023-05-15', cost: 180000,
+             location: [40.478, -77.120], emergency: false, description: 'Deck rehabilitation'},
+            
+            // Urban repairs
+            {id: 'M009', type: 'Pothole Filling', date: '2023-11-01', cost: 5000,
+             location: [39.951, -75.164], emergency: false, description: 'Pothole repairs'},
+            {id: 'M010', type: 'Joint Repair', date: '2023-10-15', cost: 35000,
+             location: [39.949, -75.160], emergency: false, description: 'Expansion joint replacement'},
+            
+            // Additional maintenance
+            {id: 'M011', type: 'Shoulder Repair', date: '2023-09-20', cost: 25000,
+             location: [40.335, -75.925], emergency: false, description: 'Shoulder reconstruction'},
+            {id: 'M012', type: 'Guardrail Replacement', date: '2023-08-10', cost: 40000,
+             location: [41.243, -77.003], emergency: false, description: 'Guardrail upgrade'},
+            {id: 'M013', type: 'Drainage Cleaning', date: '2023-07-05', cost: 12000,
+             location: [40.615, -79.150], emergency: false, description: 'Culvert cleaning'}
+        ];
+        
+        const riskFeatures = [
+            // Karst/sinkhole risk zones
+            {id: 'R001', type: 'Active Sinkhole', risk_level: 'critical',
+             location: [40.036, -76.301], radius: 50, description: 'Active sinkhole, growing'},
+            {id: 'R002', type: 'Karst Risk Zone', risk_level: 'high',
+             polygon: [[40.040, -76.315], [40.040, -76.275], [40.028, -76.275], [40.028, -76.315]],
+             description: 'High karst activity area'},
+            {id: 'R003', type: 'Historical Sinkhole', risk_level: 'moderate',
+             location: [40.033, -76.289], radius: 30, description: 'Previously repaired sinkhole'},
+            
+            // Slope stability risks
+            {id: 'R004', type: 'Unstable Slope', risk_level: 'high',
+             polygon: [[40.512, -80.200], [40.512, -80.185], [40.490, -80.185], [40.490, -80.200]],
+             description: 'Steep slope with movement history'},
+            {id: 'R005', type: 'Landslide Risk', risk_level: 'moderate',
+             location: [40.498, -80.191], radius: 75, description: 'Potential landslide area'},
+            
+            // Settlement zones
+            {id: 'R006', type: 'Settlement Zone', risk_level: 'moderate',
+             location: [40.046, -78.486], radius: 40, description: 'Compressible soils'},
+            
+            // Abandoned mine
+            {id: 'R007', type: 'Abandoned Mine', risk_level: 'high',
+             polygon: [[40.620, -79.160], [40.620, -79.140], [40.610, -79.140], [40.610, -79.160]],
+             description: 'Abandoned coal mine subsidence risk'}
+        ];
+        
+        const geotechAssets = [
+            // Retaining walls
+            {id: 'A001', type: 'MSE Wall', location: [40.509, -80.196], height: 12,
+             condition: 'good', built: '2015', description: 'Mechanically Stabilized Earth Wall'},
+            {id: 'A002', type: 'Soil Nail Wall', location: [40.494, -80.186], height: 8,
+             condition: 'fair', built: '2008', description: 'Soil nail wall for slope support'},
+            
+            // Bridge foundations
+            {id: 'A003', type: 'Bridge Piles', location: [40.480, -77.120], pile_count: 48,
+             condition: 'good', built: '2010', description: 'Steel H-piles, 80ft depth'},
+            {id: 'A004', type: 'Bridge Abutment', location: [40.475, -77.119], 
+             condition: 'excellent', built: '2010', description: 'Spread footing on rock'},
+            
+            // Embankments
+            {id: 'A005', type: 'Embankment', location: [40.050, -78.509], height: 15,
+             condition: 'fair', built: '1985', description: 'Highway embankment'},
+            
+            // Sound walls
+            {id: 'A006', type: 'Sound Wall', location: [39.950, -75.163], height: 6,
+             condition: 'good', built: '2018', description: 'Noise barrier wall'},
+            
+            // Culverts
+            {id: 'A007', type: 'Box Culvert', location: [40.616, -79.151], size: '8x6',
+             condition: 'poor', built: '1975', description: 'Concrete box culvert'},
+            
+            // Sign foundations
+            {id: 'A008', type: 'Sign Foundation', location: [40.334, -75.922],
+             condition: 'good', built: '2020', description: 'Overhead sign structure'},
+            
+            // Slope reinforcement
+            {id: 'A009', type: 'Rock Bolts', location: [40.505, -80.193], quantity: 150,
+             condition: 'good', built: '2016', description: 'Rock slope reinforcement'},
+            
+            // Drainage
+            {id: 'A010', type: 'French Drain', location: [40.032, -76.285], length: 500,
+             condition: 'new', built: '2023', description: 'Subsurface drainage system'}
+        ];
+        
+        // Functions to add data to map
+        function addBorings() {
+            boringLayer.clearLayers();
+            let count = 0;
+            
+            sampleBorings.forEach(boring => {
+                const color = boring.spt_avg < 10 ? '#ff4444' : 
+                            boring.spt_avg < 20 ? '#ffaa00' : 
+                            boring.spt_avg < 30 ? '#44ff44' : '#4169E1';
+                
+                const marker = L.circleMarker([boring.lat, boring.lon], {
+                    radius: 8,
+                    fillColor: color,
+                    color: '#000',
+                    weight: 2,
+                    opacity: 1,
+                    fillOpacity: 0.8
+                });
+                
+                marker.bindPopup(`
+                    <div class="popup-content">
+                        <h3>Boring ${boring.id}</h3>
+                        <p><span class="label">Project:</span> ${boring.project}</p>
+                        <p><span class="label">Total Depth:</span> ${boring.depth} ft</p>
+                        <p><span class="label">Rock Depth:</span> ${boring.rock_depth} ft</p>
+                        <p><span class="label">Avg SPT N-Value:</span> ${boring.spt_avg}</p>
+                        <p><span class="label">Date:</span> ${boring.date}</p>
+                        <p><span class="label">Soil Condition:</span> ${
+                            boring.spt_avg < 10 ? 'Very Soft/Loose' :
+                            boring.spt_avg < 20 ? 'Soft/Loose' :
+                            boring.spt_avg < 30 ? 'Medium' : 'Dense/Stiff'
+                        }</p>
+                    </div>
+                `);
+                
+                marker.addTo(boringLayer);
+                count++;
+            });
+            
+            document.getElementById('boring-count').textContent = count;
+        }
+        
+        function addSurfaceDistress() {
+            surfaceLayer.clearLayers();
+            let count = 0;
+            
+            surfaceDistress.forEach(distress => {
+                const color = distress.severity === 'severe' ? '#8B0000' :
+                             distress.severity === 'high' ? '#FF0000' :
+                             distress.severity === 'medium' ? '#FF6347' : '#FFA500';
+                
+                const polyline = L.polyline(distress.coords, {
+                    color: color,
+                    weight: 5,
+                    opacity: 0.7
+                });
+                
+                polyline.bindPopup(`
+                    <div class="popup-content">
+                        <h3>Surface Distress ${distress.id}</h3>
+                        <p><span class="label">Type:</span> ${distress.type}</p>
+                        <p><span class="label">Severity:</span> ${distress.severity}</p>
+                        <p><span class="label">Rut Depth:</span> ${distress.rut_depth} mm</p>
+                        <p><span class="label">IRI:</span> ${distress.iri}</p>
+                        <p><span class="label">Action:</span> ${
+                            distress.severity === 'severe' ? 'Immediate repair needed' :
+                            distress.severity === 'high' ? 'Schedule repair' :
+                            'Monitor condition'
+                        }</p>
+                    </div>
+                `);
+                
+                polyline.addTo(surfaceLayer);
+                count++;
+            });
+            
+            document.getElementById('surface-count').textContent = count;
+        }
+        
+        function addMaintenanceRecords() {
+            maintenanceLayer.clearLayers();
+            let count = 0;
+            
+            maintenanceRecords.forEach(record => {
+                const color = record.emergency ? '#FF0000' : '#FFD700';
+                const size = record.cost > 100000 ? 12 : record.cost > 50000 ? 10 : 8;
+                
+                const marker = L.circleMarker(record.location, {
+                    radius: size,
+                    fillColor: color,
+                    color: '#000',
+                    weight: 2,
+                    opacity: 1,
+                    fillOpacity: 0.7
+                });
+                
+                marker.bindPopup(`
+                    <div class="popup-content">
+                        <h3>Maintenance ${record.id}</h3>
+                        <p><span class="label">Type:</span> ${record.type}</p>
+                        <p><span class="label">Date:</span> ${record.date}</p>
+                        <p><span class="label">Cost:</span> $${record.cost.toLocaleString()}</p>
+                        <p><span class="label">Emergency:</span> ${record.emergency ? 'Yes' : 'No'}</p>
+                        <p><span class="label">Description:</span> ${record.description}</p>
+                    </div>
+                `);
+                
+                marker.addTo(maintenanceLayer);
+                count++;
+            });
+            
+            document.getElementById('maintenance-count').textContent = count;
+        }
+        
+        function addRiskFeatures() {
+            riskLayer.clearLayers();
+            let count = 0;
+            
+            riskFeatures.forEach(risk => {
+                if (risk.location && risk.radius) {
+                    // Circular risk zones
+                    const color = risk.risk_level === 'critical' ? '#8B0000' :
+                                 risk.risk_level === 'high' ? '#FF0000' :
+                                 risk.risk_level === 'moderate' ? '#FF6347' : '#FFA500';
+                    
+                    const circle = L.circle(risk.location, {
+                        radius: risk.radius,
+                        fillColor: color,
+                        fillOpacity: 0.3,
+                        color: color,
+                        weight: 2
+                    });
+                    
+                    // Add center marker for point risks
+                    if (risk.type === 'Active Sinkhole' || risk.type === 'Historical Sinkhole') {
+                        const marker = L.circleMarker(risk.location, {
+                            radius: 10,
+                            fillColor: color,
+                            color: '#000',
+                            weight: 3,
+                            opacity: 1,
+                            fillOpacity: 0.9,
+                            className: 'sinkhole-marker'
+                        });
+                        marker.addTo(riskLayer);
+                    }
+                    
+                    circle.bindPopup(`
+                        <div class="popup-content">
+                            <h3>Risk Feature ${risk.id}</h3>
+                            <p><span class="label">Type:</span> ${risk.type}</p>
+                            <p><span class="label">Risk Level:</span> ${risk.risk_level}</p>
+                            <p><span class="label">Description:</span> ${risk.description}</p>
+                        </div>
+                    `);
+                    
+                    circle.addTo(riskLayer);
+                } else if (risk.polygon) {
+                    // Polygon risk zones
+                    const color = risk.risk_level === 'high' ? '#FF0000' :
+                                 risk.risk_level === 'moderate' ? '#FF6347' : '#FFA500';
+                    
+                    const polygon = L.polygon(risk.polygon, {
+                        fillColor: color,
+                        fillOpacity: 0.2,
+                        color: color,
+                        weight: 2
+                    });
+                    
+                    polygon.bindPopup(`
+                        <div class="popup-content">
+                            <h3>Risk Zone ${risk.id}</h3>
+                            <p><span class="label">Type:</span> ${risk.type}</p>
+                            <p><span class="label">Risk Level:</span> ${risk.risk_level}</p>
+                            <p><span class="label">Description:</span> ${risk.description}</p>
+                        </div>
+                    `);
+                    
+                    polygon.addTo(riskLayer);
+                }
+                count++;
+            });
+            
+            document.getElementById('risk-count').textContent = count;
+        }
+        
+        function addGeotechAssets() {
+            assetLayer.clearLayers();
+            let count = 0;
+            
+            geotechAssets.forEach(asset => {
+                const icon = L.divIcon({
+                    className: 'asset-marker',
+                    html: `<div style="background: #9C27B0; color: white; padding: 5px; border-radius: 4px; font-size: 10px; font-weight: bold;">${asset.type.substring(0, 3)}</div>`,
+                    iconSize: [30, 20]
+                });
+                
+                const marker = L.marker(asset.location, {icon: icon});
+                
+                marker.bindPopup(`
+                    <div class="popup-content">
+                        <h3>Asset ${asset.id}</h3>
+                        <p><span class="label">Type:</span> ${asset.type}</p>
+                        <p><span class="label">Condition:</span> ${asset.condition}</p>
+                        <p><span class="label">Built:</span> ${asset.built}</p>
+                        <p><span class="label">Description:</span> ${asset.description}</p>
+                        ${asset.height ? `<p><span class="label">Height:</span> ${asset.height} m</p>` : ''}
+                        ${asset.pile_count ? `<p><span class="label">Pile Count:</span> ${asset.pile_count}</p>` : ''}
+                    </div>
+                `);
+                
+                marker.addTo(assetLayer);
+                count++;
+            });
+            
+            document.getElementById('asset-count').textContent = count;
+        }
+        
+        // Toggle functions
+        let boringsVisible = false;
+        let surfaceVisible = false;
+        let maintenanceVisible = false;
+        let risksVisible = false;
+        let assetsVisible = false;
+        
+        function toggleBorings() {
+            if (!boringsVisible) {
+                addBorings();
+                map.addLayer(boringLayer);
+                document.getElementById('btn-borings').classList.add('active');
+            } else {
+                map.removeLayer(boringLayer);
+                document.getElementById('btn-borings').classList.remove('active');
+                document.getElementById('boring-count').textContent = '0';
+            }
+            boringsVisible = !boringsVisible;
+        }
+        
+        function toggleSurface() {
+            if (!surfaceVisible) {
+                addSurfaceDistress();
+                map.addLayer(surfaceLayer);
+                document.getElementById('btn-surface').classList.add('active');
+            } else {
+                map.removeLayer(surfaceLayer);
+                document.getElementById('btn-surface').classList.remove('active');
+                document.getElementById('surface-count').textContent = '0';
+            }
+            surfaceVisible = !surfaceVisible;
+        }
+        
+        function toggleMaintenance() {
+            if (!maintenanceVisible) {
+                addMaintenanceRecords();
+                map.addLayer(maintenanceLayer);
+                document.getElementById('btn-maintenance').classList.add('active');
+            } else {
+                map.removeLayer(maintenanceLayer);
+                document.getElementById('btn-maintenance').classList.remove('active');
+                document.getElementById('maintenance-count').textContent = '0';
+            }
+            maintenanceVisible = !maintenanceVisible;
+        }
+        
+        function toggleRisks() {
+            if (!risksVisible) {
+                addRiskFeatures();
+                map.addLayer(riskLayer);
+                document.getElementById('btn-risks').classList.add('active');
+            } else {
+                map.removeLayer(riskLayer);
+                document.getElementById('btn-risks').classList.remove('active');
+                document.getElementById('risk-count').textContent = '0';
+            }
+            risksVisible = !risksVisible;
+        }
+        
+        function toggleAssets() {
+            if (!assetsVisible) {
+                addGeotechAssets();
+                map.addLayer(assetLayer);
+                document.getElementById('btn-assets').classList.add('active');
+            } else {
+                map.removeLayer(assetLayer);
+                document.getElementById('btn-assets').classList.remove('active');
+                document.getElementById('asset-count').textContent = '0';
+            }
+            assetsVisible = !assetsVisible;
+        }
+        
+        function showCorrelations() {
+            correlationLayer.clearLayers();
+            
+            // Show correlations between soft soils and surface distress
+            // Karst area correlations
+            L.polyline([[40.036, -76.300], [40.037, -76.302]], {
+                color: '#ff6b6b', weight: 2, dashArray: '5, 10', opacity: 0.7
+            }).addTo(correlationLayer);
+            
+            L.polyline([[40.034, -76.292], [40.035, -76.295]], {
+                color: '#ff6b6b', weight: 2, dashArray: '5, 10', opacity: 0.7
+            }).addTo(correlationLayer);
+            
+            // Show correlation circles
+            L.circle([40.035, -76.295], {
+                radius: 100, fillColor: '#ff6b6b', fillOpacity: 0.1,
+                color: '#ff6b6b', weight: 1
+            }).addTo(correlationLayer);
+            
+            map.addLayer(correlationLayer);
+            
+            // Show notification
+            L.popup()
+                .setLatLng([40.035, -76.295])
+                .setContent('<strong>Correlation Detected!</strong><br>Low SPT values (N<10) correlate with severe surface distress')
+                .openOn(map);
+        }
+        
+        function clearAll() {
+            map.removeLayer(boringLayer);
+            map.removeLayer(surfaceLayer);
+            map.removeLayer(maintenanceLayer);
+            map.removeLayer(riskLayer);
+            map.removeLayer(assetLayer);
+            map.removeLayer(correlationLayer);
+            
+            document.querySelectorAll('.controls button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            document.getElementById('boring-count').textContent = '0';
+            document.getElementById('surface-count').textContent = '0';
+            document.getElementById('maintenance-count').textContent = '0';
+            document.getElementById('risk-count').textContent = '0';
+            document.getElementById('asset-count').textContent = '0';
+            
+            boringsVisible = false;
+            surfaceVisible = false;
+            maintenanceVisible = false;
+            risksVisible = false;
+            assetsVisible = false;
+        }
+        
+        // Story mode
+        let storyStep = 0;
+        const storySteps = [
+            {
+                title: 'Welcome to GMS',
+                text: 'This demonstration shows how integrating multiple data sources creates comprehensive subsurface intelligence. Click Next to begin.',
+                action: () => { clearAll(); }
+            },
+            {
+                title: 'Traditional Approach: Boring Data',
+                text: 'Traditionally, we only look at boring logs. Notice the SPT values - red indicates very soft soils (N<10).',
+                action: () => { 
+                    clearAll(); 
+                    toggleBorings();
+                    map.setView([40.035, -76.295], 12);
+                }
+            },
+            {
+                title: 'Adding Surface Observations',
+                text: 'Now lets add surface distress data from ARAN vehicles. Notice the severe cracking in the same area as soft soils.',
+                action: () => { 
+                    toggleSurface();
+                }
+            },
+            {
+                title: 'Maintenance History Reveals Patterns',
+                text: 'Adding maintenance records shows repeated sinkhole repairs in the karst area - exactly where we have soft soils and surface distress!',
+                action: () => { 
+                    toggleMaintenance();
+                }
+            },
+            {
+                title: 'Risk Features Complete the Picture',
+                text: 'The risk inventory shows this is a known karst zone with active sinkholes. All data sources align to show a clear geotechnical hazard.',
+                action: () => { 
+                    toggleRisks();
+                }
+            },
+            {
+                title: 'Asset Management Context',
+                text: 'Finally, our asset inventory shows what infrastructure is at risk, including drainage improvements already installed to mitigate the problem.',
+                action: () => { 
+                    toggleAssets();
+                }
+            },
+            {
+                title: 'Integrated Intelligence',
+                text: 'By integrating all data sources, we transform isolated data points into actionable intelligence for better infrastructure decisions.',
+                action: () => { 
+                    showCorrelations();
+                }
+            }
+        ];
+        
+        function startStoryMode() {
+            storyStep = 0;
+            document.getElementById('story-panel').style.display = 'block';
+            showStoryStep();
+        }
+        
+        function showStoryStep() {
+            const step = storySteps[storyStep];
+            document.getElementById('story-title').textContent = step.title;
+            document.getElementById('story-text').textContent = step.text;
+            step.action();
+        }
+        
+        function nextStory() {
+            if (storyStep < storySteps.length - 1) {
+                storyStep++;
+                showStoryStep();
+            }
+        }
+        
+        function previousStory() {
+            if (storyStep > 0) {
+                storyStep--;
+                showStoryStep();
+            }
+        }
+        
+        function exitStoryMode() {
+            document.getElementById('story-panel').style.display = 'none';
+        }
+        
+        // Initialize with some data visible
+        window.onload = function() {
+            // Show borings by default
+            toggleBorings();
+            
+            // Add layer control
+            L.control.layers({
+                'OpenStreetMap': osm,
+                'Satellite': satellite
+            }).addTo(map);
+        };
+    </script>
+</body>
+</html>
