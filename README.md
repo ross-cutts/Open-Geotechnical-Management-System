@@ -193,11 +193,9 @@ The FastAPI provides RESTful endpoints for all operations:
 
 ### ETL Scripts
 
-#### ARAN Data Processing
+#### Boring Data Processing
 ```bash
-python etl/imagery/process_aran_data.py \
-  --input-file data/aran_survey.json \
-  --correlation-distance 50
+python etl/boprings/import_boring_csv.py \
 ```
 
 #### DEM Processing
